@@ -1,6 +1,6 @@
 sudo apt install ffmpeg
 
-# pip install --force-reinstall torch torchvision torchaudio
+pip install --force-reinstall torch torchvision torchaudio
 
 pip install pydub
 pip install datasets
