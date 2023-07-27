@@ -11,7 +11,7 @@ pip install soundfile
 pip install evaluate
 pip install jiwer
 pip install tensorboardX
-
+pip install accelerate
 
 # cuda-cudart-11.7.99-0
 #   cuda-cupti-11.7.101-0
