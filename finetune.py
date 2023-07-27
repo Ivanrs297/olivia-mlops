@@ -110,15 +110,15 @@ from transformers import WhisperFeatureExtractor
 from transformers import WhisperTokenizer
 
 # - Load Feature extractor: WhisperFeatureExtractor
-feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-medium")
+feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
 
 # - Load Tokenizer: WhisperTokenizer
-tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="spanish", task="transcribe")
+tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
 
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 3. Combine elements with WhisperProcessor
 from transformers import WhisperProcessor
-processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="spanish", task="transcribe")
+processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
 
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 4. Prepare Data
@@ -150,7 +150,7 @@ metric = evaluate.load("wer")
 
 # STEP 5.3. Load a pre-trained Checkpoint
 from transformers import WhisperForConditionalGeneration
-model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium")
+model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
 
 """
 Overide generation arguments:
@@ -169,14 +169,14 @@ https://huggingface.co/docs/transformers/main_classes/trainer#transformers.Seq2S
 from transformers import Seq2SeqTrainingArguments
 
 training_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-medium-olivia",  # change to a repo name of your choice
+    output_dir="./whisper-small-olivia",  # change to a repo name of your choice
     per_device_train_batch_size=16,
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
     warmup_steps=500,
     max_steps=4000,
     gradient_checkpointing=True,
-    fp16=False,
+    fp16=True,
     evaluation_strategy="steps",
     per_device_eval_batch_size=8,
     predict_with_generate=True,
@@ -215,6 +215,14 @@ processor.save_pretrained(training_args.output_dir)
 """
 Training will take appr. 5-10 hours depending on your GPU.
 """
+print('Evaluation before training is started.')
+print(trainer.evaluate())  # <-- !!! Here the training starting !!!
+print('Evaluation is finished.')
+
+# STEP 5.5. Training
+"""
+Training will take appr. 5-10 hours depending on your GPU.
+"""
 print('Training is started.')
 trainer.train()  # <-- !!! Here the training starting !!!
 print('Training is finished.')
@@ -233,7 +241,7 @@ https://huggingface.co/spaces/huggingface/hf-speech-bench
 #     "dataset_args": "config: lt, split: test",
 #     "language": "lt",
 #     "model_name": "Whisper Large LT - Vytautas Bielinskas",  # a 'pretty' name for our model
-#     "finetuned_from": "openai/whisper-medium",
+#     "finetuned_from": "openai/whisper-small",
 #     "tasks": "automatic-speech-recognition",
 #     "tags": "hf-asr-leaderboard",
 # }
