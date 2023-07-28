@@ -13,6 +13,8 @@ pip install jiwer
 pip install tensorboardX
 pip install accelerate
 
+pip install wandb
+
 # cuda-cudart-11.7.99-0
 #   cuda-cupti-11.7.101-0
 #   cuda-libraries-11.7.1-0
