@@ -7,6 +7,10 @@ import torch
 # import the relavant libraries for loggin in
 from huggingface_hub import HfApi, HfFolder
 
+import wandb
+
+wandb.init(project='whisper_small_olivia')
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Functions and procedures
 def login_hugging_face(token: str) -> None:
@@ -227,6 +231,9 @@ print('Training is started.')
 trainer.train()  # <-- !!! Here the training starting !!!
 print('Training is finished.')
 
+print('Evaluation after training is finished.')
+print(trainer.evaluate())  # <-- !!! Here the training starting !!!
+print('Evaluation is finished.')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 """
