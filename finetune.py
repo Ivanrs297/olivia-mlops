@@ -103,7 +103,7 @@ from datasets import DatasetDict, load_from_disk
 
 common_voice = load_from_disk("datasets/olivia_segments")
 common_voice = common_voice.remove_columns(
-    ['_id', 'index', 'label', 'start', 'end', 'state', 'source']
+    ['_id', 'index', 'label', 'start', 'end', 'state', 'source', 'word_count']
 )
 
 print(common_voice)
@@ -118,6 +118,16 @@ feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-smal
 
 # - Load Tokenizer: WhisperTokenizer
 tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
+
+input_str = common_voice["train"][0]["sentence"]
+labels = tokenizer(input_str).input_ids
+decoded_with_special = tokenizer.decode(labels, skip_special_tokens=False)
+decoded_str = tokenizer.decode(labels, skip_special_tokens=True)
+
+print(f"Input:                 {input_str}")
+print(f"Decoded w/ special:    {decoded_with_special}")
+print(f"Decoded w/out special: {decoded_str}")
+print(f"Are equal:             {input_str == decoded_str}")
 
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 3. Combine elements with WhisperProcessor
@@ -140,7 +150,7 @@ print(f'{common_voice["train"][0]}\n')
 common_voice = common_voice.map(
     prepare_dataset,
     remove_columns=common_voice.column_names["train"],
-    num_proc=2 # num_proc > 1 will enable multiprocessing
+    num_proc=4 # num_proc > 1 will enable multiprocessing
     )
 
 # - - - - - - - - - - - - - - - - - - - - - |
@@ -178,15 +188,15 @@ training_args = Seq2SeqTrainingArguments(
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
     warmup_steps=500,
-    max_steps=4000,
+    max_steps=3210,
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
-    per_device_eval_batch_size=8,
+    per_device_eval_batch_size=16,
     predict_with_generate=True,
     generation_max_length=225,
-    save_steps=1000,
-    eval_steps=1000,
+    save_steps=107,
+    eval_steps=107,
     logging_steps=25,
     report_to=["wandb"],
     load_best_model_at_end=True,
