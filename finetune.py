@@ -9,6 +9,8 @@ from huggingface_hub import HfApi, HfFolder
 
 import wandb
 
+from torcheval.metrics.functional import word_error_rate
+
 wandb.init(project='whisper_small_olivia')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,7 +88,11 @@ def compute_metrics(pred):
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-    wer = 100 * metric.compute(predictions=pred_str, references=label_str)
+    # apparently it needs to normalize according to model card
+    # pred_str  = tokenizer._normalize(pred_str)
+    # label_str = tokenizer._normalize(label_str)
+
+    wer = 100 * word_error_rate(pred_str, label_str) #metric.compute(predictions=pred_str, references=label_str)
 
     return {"wer": wer}
 
@@ -200,8 +206,8 @@ training_args = Seq2SeqTrainingArguments(
     logging_steps=25,
     report_to=["wandb"],
     load_best_model_at_end=True,
-    metric_for_best_model="wer",
-    greater_is_better=False,
+    # metric_for_best_model="wer",
+    # greater_is_better=False,
     push_to_hub=False, # testing
 )
 
