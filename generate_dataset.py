@@ -1,5 +1,4 @@
 import json
-import numpy as np
 import random
 from pydub import AudioSegment
 from datasets import Dataset, DatasetDict
@@ -10,30 +9,48 @@ current_directory = os.getcwd()
 
 random.seed(0)
 
+# Load and preprocess data
 with open("main.custom_segments.json", "r", encoding="utf-8") as jsonfile:
     data = json.load(jsonfile)
 
-audios = np.unique([item["source"] for item in data])
+for item in data:
+    item["label"] = str(item["label"]).strip()
 
+
+# Filter data
+def filter_item(item):
+    duration = item["end"] - item["start"]
+    test1 = duration <= 30 and duration > 3
+    test2 = item["state"] == "reviewed"
+    test3 = len(str(item["label"]).split()) > 1
+    return test1 and test2 and test3
+
+
+filtered_data = [item for item in data if filter_item(item)]
+
+# Count number of segments per source
 count_dict = {}
+for item in filtered_data:
+    if item["source"] in count_dict.keys():
+        count_dict[item["source"]] += 1
+    else:
+        count_dict[item["source"]] = 1
 
-count = 0
-for audio in audios:
-    audio_count = len([item for item in data if item["source"] == audio])
-    print(audio, audio_count)
-    count += audio_count
-    count_dict[audio] = audio_count
+_ = [print(key, ":", count_dict[key]) for key in count_dict.keys()]
 
-print("Total", count)
-
-
+# Estimate dataset distribution
+count = sum([count_dict[key] for key in count_dict.keys()])
 test_count = int(count * 0.15)
 val_count = int(count * 0.15)
 train_count = count - (test_count + val_count)
-print("Estimated Distribution: ", test_count, val_count, train_count)
 
+print("Total:", count)
+print("Test:", test_count)
+print("Validation:", val_count)
+print("Train", train_count)
+
+# Obtain real dataset distribution
 sorted_audios = sorted(count_dict.keys(), key=lambda x: count_dict[x], reverse=True)
-
 
 test_audios = []
 curr = sorted_audios.pop()
@@ -57,22 +74,16 @@ print("Test basket", sum([count_dict[item] for item in test_audios]))
 print("Val basket", sum([count_dict[item] for item in val_audios]))
 print("Train basket", sum([count_dict[item] for item in train_audios]))
 
-
-test_list = [
-    segment
-    for segment in data
-    if segment["source"] in test_audios and segment["end"] > segment["start"]
-]
-val_list = [
-    segment
-    for segment in data
-    if segment["source"] in val_audios and segment["end"] > segment["start"]
-]
-train_list = [
-    segment
-    for segment in data
-    if segment["source"] in train_audios and segment["end"] > segment["start"]
-]
+# Generate split lists of segments
+test_list, val_list, train_list = [], [], []
+for segment in filtered_data:
+    segment["word_count"] = len(str(segment["label"]).split())
+    if segment["source"] in test_audios:
+        test_list.append(segment)
+    elif segment["source"] in val_audios:
+        val_list.append(segment)
+    else:
+        train_list.append(segment)
 
 
 def convert_seconds_to_time_format(seconds):
@@ -139,7 +150,10 @@ for item in test_list:
     start_formatted = convert_seconds_to_time_format(item["start"]).replace(":", "")
     end_formatted = convert_seconds_to_time_format(item["end"]).replace(":", "")
     # output_name = f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav"
-    output_name = os.path.join(current_directory, f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav")
+    output_name = os.path.join(
+        current_directory,
+        f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav",
+    )
     start_ms = total_milliseconds(item["start"])
     end_ms = total_milliseconds(item["end"])
     trimmed_audio = trim_audio(input_name, output_name, start_ms, end_ms)
@@ -159,7 +173,10 @@ for item in val_list:
     start_formatted = convert_seconds_to_time_format(item["start"]).replace(":", "")
     end_formatted = convert_seconds_to_time_format(item["end"]).replace(":", "")
     # output_name = f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav"
-    output_name = os.path.join(current_directory, f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav")
+    output_name = os.path.join(
+        current_directory,
+        f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav",
+    )
     start_ms = total_milliseconds(item["start"])
     end_ms = total_milliseconds(item["end"])
     trimmed_audio = trim_audio(input_name, output_name, start_ms, end_ms)
@@ -179,7 +196,10 @@ for item in train_list:
     start_formatted = convert_seconds_to_time_format(item["start"]).replace(":", "")
     end_formatted = convert_seconds_to_time_format(item["end"]).replace(":", "")
     # output_name = f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav"
-    output_name = os.path.join(current_directory, f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav")
+    output_name = os.path.join(
+        current_directory,
+        f"segments/{item['source']}-{start_formatted}-{end_formatted}.wav",
+    )
     start_ms = total_milliseconds(item["start"])
     end_ms = total_milliseconds(item["end"])
     trimmed_audio = trim_audio(input_name, output_name, start_ms, end_ms)
