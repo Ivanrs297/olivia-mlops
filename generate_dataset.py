@@ -85,6 +85,9 @@ for segment in filtered_data:
     else:
         train_list.append(segment)
 
+random.shuffle(test_audios)
+random.shuffle(val_list)
+random.shuffle(train_list)
 
 def convert_seconds_to_time_format(seconds):
     # Create a timedelta object from the number of seconds
