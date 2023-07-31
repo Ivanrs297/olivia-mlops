@@ -11,7 +11,7 @@ import wandb
 
 from torcheval.metrics.functional import word_error_rate
 
-wandb.init(project='whisper_small_olivia')
+wandb.init(project='whisper_medium_olivia')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Functions and procedures
@@ -120,10 +120,10 @@ from transformers import WhisperFeatureExtractor
 from transformers import WhisperTokenizer
 
 # - Load Feature extractor: WhisperFeatureExtractor
-feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
+feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-medium")
 
 # - Load Tokenizer: WhisperTokenizer
-tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
+tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="spanish", task="transcribe")
 
 input_str = common_voice["train"][0]["sentence"]
 labels = tokenizer(input_str).input_ids
@@ -138,7 +138,7 @@ print(f"Are equal:             {input_str == decoded_str}")
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 3. Combine elements with WhisperProcessor
 from transformers import WhisperProcessor
-processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
+processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="spanish", task="transcribe")
 
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 4. Prepare Data
@@ -170,7 +170,7 @@ metric = evaluate.load("wer")
 
 # STEP 5.3. Load a pre-trained Checkpoint
 from transformers import WhisperForConditionalGeneration
-model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
+model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium")
 
 """
 Overide generation arguments:
@@ -187,23 +187,29 @@ Check for Seq2SeqTrainingArguments here:
 https://huggingface.co/docs/transformers/main_classes/trainer#transformers.Seq2SeqTrainingArguments
 """
 from transformers import Seq2SeqTrainingArguments
+import math
+
+batch_size = 8
+steps_per_epoch = math.ceil(2902 / batch_size)
+epochs = 10
+assert (epochs % 2) == 0
 
 training_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-small-olivia",  # change to a repo name of your choice
-    per_device_train_batch_size=16,
-    gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
+    output_dir="./whisper-medium-olivia",  # change to a repo name of your choice
+    per_device_train_batch_size=batch_size,
+    gradient_accumulation_steps=2,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
-    warmup_steps=500,
-    max_steps=3210,
+    warmup_steps=(steps_per_epoch * epochs) // 8,
+    max_steps=steps_per_epoch * epochs,
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
-    per_device_eval_batch_size=16,
+    per_device_eval_batch_size=batch_size,
     predict_with_generate=True,
     generation_max_length=225,
-    save_steps=107,
-    eval_steps=107,
-    logging_steps=25,
+    save_steps=steps_per_epoch * (epochs / 2),
+    eval_steps=steps_per_epoch,
+    logging_steps=steps_per_epoch // 10,
     report_to=["wandb"],
     load_best_model_at_end=True,
     # metric_for_best_model="wer",
@@ -222,7 +228,7 @@ trainer = Seq2SeqTrainer(
     args=training_args,
     model=model,
     train_dataset=common_voice["train"],
-    eval_dataset=common_voice["test"],
+    eval_dataset=common_voice["validation"],
     data_collator=data_collator,
     compute_metrics=compute_metrics,
     tokenizer=processor.feature_extractor,
@@ -264,7 +270,7 @@ https://huggingface.co/spaces/huggingface/hf-speech-bench
 #     "dataset_args": "config: lt, split: test",
 #     "language": "lt",
 #     "model_name": "Whisper Large LT - Vytautas Bielinskas",  # a 'pretty' name for our model
-#     "finetuned_from": "openai/whisper-small",
+#     "finetuned_from": "openai/whisper-medium",
 #     "tasks": "automatic-speech-recognition",
 #     "tags": "hf-asr-leaderboard",
 # }
