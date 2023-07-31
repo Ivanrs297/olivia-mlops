@@ -6,3 +6,6 @@ gdown 1jiOWYtEpbG4V6Ei5IQAYu8Q9-6XqpBw6
 
 2. Unzip segments
 unzip segments.zip
+
+3. Generate dataset
+python generate_dataset.py
