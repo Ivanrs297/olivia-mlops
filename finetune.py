@@ -11,7 +11,7 @@ import wandb
 
 from torcheval.metrics.functional import word_error_rate
 
-wandb.init(project='whisper_medium_olivia')
+wandb.init(project='whisper_small_olivia')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Functions and procedures
@@ -89,8 +89,8 @@ def compute_metrics(pred):
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
     # apparently it needs to normalize according to model card
-    # pred_str  = tokenizer._normalize(pred_str)
-    # label_str = tokenizer._normalize(label_str)
+    # pred_str  = [tokenizer._normalize(s) for s in pred_str]
+    # label_str = [tokenizer._normalize(s) for s in label_str]
 
     wer = 100 * word_error_rate(pred_str, label_str) #metric.compute(predictions=pred_str, references=label_str)
 
@@ -120,10 +120,10 @@ from transformers import WhisperFeatureExtractor
 from transformers import WhisperTokenizer
 
 # - Load Feature extractor: WhisperFeatureExtractor
-feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-medium")
+feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
 
 # - Load Tokenizer: WhisperTokenizer
-tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-medium", language="spanish", task="transcribe")
+tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
 
 input_str = common_voice["train"][0]["sentence"]
 labels = tokenizer(input_str).input_ids
@@ -138,7 +138,7 @@ print(f"Are equal:             {input_str == decoded_str}")
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 3. Combine elements with WhisperProcessor
 from transformers import WhisperProcessor
-processor = WhisperProcessor.from_pretrained("openai/whisper-medium", language="spanish", task="transcribe")
+processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="spanish", task="transcribe")
 
 # - - - - - - - - - - - - - - - - - - - - - |
 # STEP 4. Prepare Data
@@ -170,7 +170,7 @@ metric = evaluate.load("wer")
 
 # STEP 5.3. Load a pre-trained Checkpoint
 from transformers import WhisperForConditionalGeneration
-model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium")
+model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
 
 """
 Overide generation arguments:
@@ -189,17 +189,17 @@ https://huggingface.co/docs/transformers/main_classes/trainer#transformers.Seq2S
 from transformers import Seq2SeqTrainingArguments
 import math
 
-batch_size = 8
+batch_size = 16
 steps_per_epoch = math.ceil(2902 / batch_size)
-epochs = 10
+epochs = 6
 assert (epochs % 2) == 0
 
 training_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-medium-olivia",  # change to a repo name of your choice
+    output_dir="./whisper-small-olivia",  # change to a repo name of your choice
     per_device_train_batch_size=batch_size,
-    gradient_accumulation_steps=2,  # increase by 2x for every 2x decrease in batch size
-    learning_rate=1e-5,
-    warmup_steps=(steps_per_epoch * epochs) // 8,
+    gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
+    learning_rate=1e-6,
+    warmup_steps=(steps_per_epoch * 3),
     max_steps=steps_per_epoch * epochs,
     gradient_checkpointing=True,
     fp16=True,
@@ -207,9 +207,9 @@ training_args = Seq2SeqTrainingArguments(
     per_device_eval_batch_size=batch_size,
     predict_with_generate=True,
     generation_max_length=225,
-    save_steps=steps_per_epoch * (epochs / 2),
+    save_steps=steps_per_epoch,
     eval_steps=steps_per_epoch,
-    logging_steps=steps_per_epoch // 10,
+    logging_steps=10,
     report_to=["wandb"],
     load_best_model_at_end=True,
     # metric_for_best_model="wer",
@@ -270,7 +270,7 @@ https://huggingface.co/spaces/huggingface/hf-speech-bench
 #     "dataset_args": "config: lt, split: test",
 #     "language": "lt",
 #     "model_name": "Whisper Large LT - Vytautas Bielinskas",  # a 'pretty' name for our model
-#     "finetuned_from": "openai/whisper-medium",
+#     "finetuned_from": "openai/whisper-small",
 #     "tasks": "automatic-speech-recognition",
 #     "tags": "hf-asr-leaderboard",
 # }
