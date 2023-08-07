@@ -165,3 +165,6 @@ wandb
 audio_samples
 whisper-small-olivia
 whisper-medium-olivia
+whisperX
+.chroma
+hub
