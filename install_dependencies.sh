@@ -27,3 +27,6 @@ pip install wandb
 
 pip install sentence_transformers
 pip install chromadb==0.3.29
+pip install bitsandbytes
+pip install langchain
+pip install xformers
