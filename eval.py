@@ -11,6 +11,25 @@ from torcheval.metrics.functional import word_error_rate
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Functions and procedures
+
+import unicodedata
+import string
+
+def normalize_text(text):
+    # Remove punctuation
+    translator = str.maketrans("", "", string.punctuation)
+    text_without_punctuation = text.translate(translator)
+    
+    # Lowercase the text
+    normalized_text = text_without_punctuation.lower()
+    
+    # Normalize Unicode characters (e.g., accented characters)
+    normalized_text = unicodedata.normalize('NFD', normalized_text)
+    normalized_text = ''.join([char for char in normalized_text if not unicodedata.combining(char)])
+    
+    return normalized_text
+
+
 def login_hugging_face(token: str) -> None:
     """
     Loging to Hugging Face portal with a given token.
@@ -122,7 +141,12 @@ for example in tqdm(common_voice["validation"]):
     # print(result) # after alignment
 
     prediction = " ".join([s["text"] for s in result["segments"]])
-    error = error + compute_metrics([prediction], [example["sentence"]])
+    ground_truth = example["sentence"]
+
+    prediction = normalize_text(prediction)
+    ground_truth = normalize_text(ground_truth)
+    
+    error = error + compute_metrics([prediction], [ground_truth])
     # print("wer", error)
     
     # delete model if low on GPU resources
