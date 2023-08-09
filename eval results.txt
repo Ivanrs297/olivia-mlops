@@ -1,0 +1,7 @@
+EvaLuación sin normalización con modelo whisper-large-v2
+WER = 44.6814 sobre 478 segmentos de 30 segundos con un tiempo promedio de inferencia de 2s por 30s.
+So the model would take approximately 120 seconds to process 30 minutes of audio.
+
+EvaLuación con normalización (remueve signos de puntuación y vuelve todo minúsculas) con modelo whisper-large-v2:
+WER = 27.3338 sobre 478 segmentos de 30 segundos con un tiempo promedio de inferencia de 2s por 30s.
+So the model would take approximately 120 seconds to process 30 minutes of audio.
