@@ -19,12 +19,12 @@ questions = [
         # TODO: identificar que tipo de género
         # set II_genero to "Otro"
         "key": "II_genero_especificar",
-        "question": f"¿Con qué genero se identifica {WHOSE}? Responde 'femenino' o 'masculino'",
+        "question": f"¿Con qué genero se identifica {WHOSE}?",
     },
     # sexo
     {
         "key": "II_sexo",
-        "question": f"¿Cuál es el sexo de {WHOSE}? Responde 'hombre' o 'mujer'",
+        "question": f"¿Cuál es el sexo de {WHOSE}?",
         "otherKey": None,
         "categories": ["mujer", "hombre", "intersexual"],
     },
