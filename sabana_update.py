@@ -219,6 +219,23 @@ def update_expediente(token, audio_id, update):
         raise Exception(response.text)
 
 
+import whisperx
+import gc
+device = "cuda" 
+batch_size = 8 # reduce if low on GPU mem
+compute_type = "float16" # change to "int8" if low on GPU mem (may reduce accuracy)
+tmodel = whisperx.load_model("large-v2", device, compute_type=compute_type, language="es")
+model_a, metadata = whisperx.load_align_model(language_code="es", device=device)
+
+def transcribe(audiopath):
+    # 1. Transcribe with original whisper (batched)
+    audio = whisperx.load_audio(audiopath)
+    result = tmodel.transcribe(audio, batch_size=batch_size)
+    # 2. Align whisper output
+    result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
+    prediction = " ".join([s["text"] for s in result["segments"]])
+    return prediction
+
 from glob import glob
 from pathlib import Path
 import time
@@ -231,6 +248,7 @@ def run():
         start_time = time.time()
         audiopath = Path(audio)
         audio_id = audiopath.stem
+        transcription = transcribe(audiopath)
         try:
             update = get_update(audio_id)
             update_expediente(token, audio_id, update)
