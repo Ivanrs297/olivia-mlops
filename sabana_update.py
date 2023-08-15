@@ -159,10 +159,10 @@ def get_update(audio_id):
                 update[qn["otherKey"]] = answer
                 print("A:", answer)
             else:
-                update["key"] = highest[0]
+                update[qn["key"]] = highest[0]
                 print("A:", highest[0])
         else:
-            update["key"] = answer
+            update[qn["key"]] = answer
             print("A:", answer)
         print("\n")
 
@@ -179,7 +179,7 @@ def connect():
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
-    data = {"email": "", "password": ""}
+    data = {"email": "david@gmail.com", "password": "ol1v14"}
     response = requests.post(url, json=data, headers=headers)
     if response.status_code == 200:
         token = response.json()
@@ -241,20 +241,25 @@ from pathlib import Path
 import time
 
 def run():
-    token = connect()
-    audios = glob("audio_samples")
-    for audio in audios:
-        print(f"Processing {audio_id}\n")
-        start_time = time.time()
-        audiopath = Path(audio)
-        audio_id = audiopath.stem
-        transcription = transcribe(audiopath)
-        try:
-            update = get_update(audio_id)
-            update_expediente(token, audio_id, update)
-        except Exception as error:
-            print(f"Error when processing {audio_id}:", error)
-        end_time = time.time()
-        execution_time = end_time - start_time
-        print("\nExecution time:", execution_time, "seconds")
-        print()
+    update = get_update("F-285")
+    # token = connect()
+    # audios = glob("audio_samples")
+    # print(token)
+    # for audio in audios:
+    #     print(f"Processing {audio_id}\n")
+    #     start_time = time.time()
+    #     audiopath = Path(audio)
+    #     audio_id = audiopath.stem
+    #     transcription = transcribe(audiopath)
+    #     try:
+    #         update = get_update(audio_id)
+    #         update_expediente(token, audio_id, update)
+    #     except Exception as error:
+    #         print(f"Error when processing {audio_id}:", error)
+    #     end_time = time.time()
+    #     execution_time = end_time - start_time
+    #     print("\nExecution time:", execution_time, "seconds")
+    #     print()
+
+
+run()
