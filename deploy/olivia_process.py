@@ -23,6 +23,18 @@ from pathlib import Path
 import time
 import subprocess
 import os
+import re
+
+PROMPT_TEMPLATE = """Basado en los siguientes fragmentos de una entrevista, responde la pregunta del final (si en los fragmentos no se encuentra la respuesta a la pregunta del final, responde 'NA').
+
+Fragmentos:
+{context}
+
+Pregunta:
+{question}
+
+Respuesta:
+"""
 
 # define custom stopping criteria object
 class StopOnTokens(StoppingCriteria):
@@ -34,7 +46,7 @@ class StopOnTokens(StoppingCriteria):
                 return True
         return False
     
-def get_update(audio_id):
+def get_update(audio_id, llm):
     # load document
     filepath = f"./transcriptions/{audio_id}.vtt"
     loader = TextLoader(filepath, encoding="utf-8")
@@ -100,7 +112,7 @@ def get_update(audio_id):
             update[qn["key"]] = answer
             print("A:", answer)
         print("\n")
-
+    print("Hello: ", update)
     return update
 
 def connect():
@@ -188,7 +200,11 @@ def update_expediente(token, expediente_id, update):
 def download_audio(url, exp_id):
     response = requests.get(url)
     if response.status_code == 200:
-        with open(f"pending/{exp_id}.wav", "wb") as file:
+
+        # TODO Download from src format, m4a, mp3 wav
+        # get format
+        # TODO test without format 
+        with open(f"pending/{exp_id}", "wb") as file:
             file.write(response.content)
         print("File downloaded successfully.")
     else:
@@ -224,7 +240,7 @@ def transcribe_pending():
                 print(f"Error removing the file: {e}")
                 print()
 
-def answer_pending():
+def answer_pending(token, llm):
     trans = glob("transcriptions/*")
     for audio in trans:
         print(f"Processing {audio}\n")
@@ -232,7 +248,7 @@ def answer_pending():
         audiopath = Path(audio)
         audio_id = audiopath.stem
         try:
-            update = get_update(audio_id)
+            update = get_update(audio_id, llm)
             update_expediente(token, audio_id, update)
             try:
                 os.remove(audiopath)
@@ -268,6 +284,7 @@ def update_expediente(token, expediente_id, update):
         raise Exception(response.text)
 
 def run():
+
     model_id = "meta-llama/Llama-2-13b-chat-hf"  #'meta-llama/Llama-2-70b-chat-hf'
 
     device = f"cuda:{cuda.current_device()}" if cuda.is_available() else "cpu"
@@ -326,18 +343,6 @@ def run():
 
     llm = HuggingFacePipeline(pipeline=generate_text)
 
-
-    PROMPT_TEMPLATE = """Basado en los siguientes fragmentos de una entrevista, responde la pregunta del final (si en los fragmentos no se encuentra la respuesta a la pregunta del final, responde 'NA').
-
-    Fragmentos:
-    {context}
-
-    Pregunta:
-    {question}
-
-    Respuesta:
-    """
-
     device = "cuda" 
     batch_size = 8 # reduce if low on GPU mem
     compute_type = "float16" # change to "int8" if low on GPU mem (may reduce accuracy)
@@ -346,14 +351,33 @@ def run():
 
     token = connect()
 
-    tmodel = whisperx.load_model("large-v2", device, compute_type=compute_type, language="es")
-    model_a, metadata = whisperx.load_align_model(language_code="es", device=device)
+    # download_audio()
+    exps = get_expedientes(token)
+    for exp in exps:
+        if len(exp['audios']) > 0 and exp["expediente"]["audio_procesado"] == False:
+            print(exp['expediente']['_id'])
+            download_audio(exp['audios'][0]['url'], exp['expediente']['_id'])
+            print()
 
+    # tmodel = whisperx.load_model("large-v2", device, compute_type=compute_type, language="es")
+    # model_a, metadata = whisperx.load_align_model(language_code="es", device=device)
+
+    # TODO create folder /transcriptions/
     transcribe_pending()
+    # TODO update status of expediente
 
-    upt = answer_pending()
+    # Return JSON 
+    upt = answer_pending(token, llm)
 
-    update_expediente(token, "64dbb5286fbd221ffb8209ec", upt)
+    # update_expediente(token, "64dbb5286fbd221ffb8209ec", upt)
 
 if __name__ == "__main__":
     run()
+
+    # 1. Download download_audio
+    # 2. Transcribe
+    # 3. Update, bugueado
+
+    # Pending...
+    # Robust testing
+    # Loggers
