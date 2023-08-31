@@ -35,6 +35,7 @@ Pregunta:
 
 Respuesta:
 """
+stop_token_ids = []
 
 # define custom stopping criteria object
 class StopOnTokens(StoppingCriteria):
