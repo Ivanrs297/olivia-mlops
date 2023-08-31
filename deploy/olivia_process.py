@@ -267,22 +267,6 @@ def answer_pending(token, llm):
         break
     return update
 
-def update_expediente(token, expediente_id, update):
-    res = get_cedula_by_expediente_id(token, expediente_id)
-    cedula_id = res["cedula"]["_id"]
-    url = f"https://api.olivia-fairlac.org/api/cedula/{cedula_id}?expediente={expediente_id}"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
-    data = update
-    response = requests.patch(url, json=data, headers=headers)
-    if response.status_code == 200:
-        print("PATCH request was successful.")
-    else:
-        raise Exception(response.text)
-
 def run():
 
     model_id = "meta-llama/Llama-2-13b-chat-hf"  #'meta-llama/Llama-2-70b-chat-hf'
@@ -336,7 +320,7 @@ def run():
         task="text-generation",
         # we pass model parameters here too
         stopping_criteria=stopping_criteria,  # without this model rambles during chat
-        temperature=0.0,  # 'randomness' of outputs, 0.0 is the min and 1.0 the max
+        temperature=0.1,  # 'randomness' of outputs, 0.0 is the min and 1.0 the max
         max_new_tokens=512,  # mex number of tokens to generate in the output
         repetition_penalty=1.1,  # without this output begins repeating
     )
