@@ -113,7 +113,6 @@ def get_update(audio_id, llm):
             update[qn["key"]] = answer
             print("A:", answer)
         print("\n")
-    print("Hello: ", update)
     return update
 
 def connect():
@@ -226,6 +225,7 @@ def transcribe(audio_path):
 
 def transcribe_pending():
     audios = glob("pending/*")
+    print("Total Transcribe Pending Audios: ", len(audios))
     for audio in audios:
         print(f"Processing {audio}\n")
         start_time = time.time()
@@ -243,6 +243,7 @@ def transcribe_pending():
 
 def answer_pending(token, llm):
     trans = glob("transcriptions/*")
+    print("Total Answer Pending in Transcriptios: ", trans)
     for audio in trans:
         print(f"Processing {audio}\n")
         start_time = time.time()
@@ -265,7 +266,6 @@ def answer_pending(token, llm):
         execution_time = end_time - start_time
         print("\nExecution time:", execution_time, "seconds")
         print()
-        break
     return update
 
 def run():
@@ -353,8 +353,6 @@ def run():
 
     # Return JSON 
     upt = answer_pending(token, llm)
-
-    # update_expediente(token, "64dbb5286fbd221ffb8209ec", upt)
 
 if __name__ == "__main__":
     run()
