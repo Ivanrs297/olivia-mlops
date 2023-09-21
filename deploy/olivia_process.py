@@ -92,27 +92,27 @@ def get_update(audio_id, llm):
     update = {}
     for qn in questions:
         query = qn["question"]
-        print("Q:", query)
+        # print("Q:", query)
         answer = qa_chain.run(query)
         answer = answer.split("\n")[0].strip()
         if "categories" in qn.keys():
-            print("Available Categories", qn["categories"])
+            # print("Available Categories", qn["categories"])
             cats = FAISS.from_texts(qn["categories"], embeddings)
             scores = cats.similarity_search_with_score(answer)
             highest = max(scores, key=lambda x: x[1])
             if highest[1] < 0.5 and qn["otherKey"] is not None:
                 update[qn["otherKey"]] = answer
-                print("A:", answer)
+                # print("A:", answer)
             else:
                 update[qn["key"]] = highest[0].page_content
-                print("A:", highest[0].page_content)
+                # print("A:", highest[0].page_content)
         elif "type" in qn.keys() and qn["type"] == "boolean":
             update[qn["key"]] = len(answer) > 0
-            print("A:", len(answer) > 0)
+            # print("A:", len(answer) > 0)
         else:
             update[qn["key"]] = answer
-            print("A:", answer)
-        print("\n")
+            # print("A:", answer)
+        # print("\n")
     return update
 
 def connect():
@@ -245,10 +245,11 @@ def answer_pending(token, llm):
     trans = glob("transcriptions/*")
     print("Total Answer Pending in Transcriptios: ", trans)
     for audio in trans:
-        print(f"Processing {audio}\n")
         start_time = time.time()
         audiopath = Path(audio)
         audio_id = audiopath.stem
+        print(f"Processing {audio} - {audio_id}\n")
+
         try:
             update = get_update(audio_id, llm)
             update_expediente(token, audio_id, update)
