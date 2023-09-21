@@ -356,6 +356,8 @@ def run():
 
 if __name__ == "__main__":
     run()
+    os.system('sudo shutdown now')
+
 
     # 1. Download download_audio
     # 2. Transcribe
